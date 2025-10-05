@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Exposição MATEMATIVA</title>
+  <style>
+    h3 {font-size: 12px;color: #333;margin: 10px 0;}
+    p {font-family: "Arial", sans-serif;font-size: 10px;}
+    p a {font-family: "Arial", sans-serif;font-size: 10px;}
+    body {font-family: Arial, sans-serif;margin: 0;background: #f8f9fa;}
+    header {background: #4285f4;padding: 16px;color: white;font-size: 50px;text-align: center;}
+    #search-container {background: white;padding: 12px;display: flex;gap: 8px;align-items: center;border-bottom: 1px solid #ddd;}
+    #search {flex: 1;padding: 12px;font-size: 12px;border: 1px solid #ccc;border-radius: 5px;}
+    #typeSelect {padding: 12px;font-size: 12px;}
+    #tabs {display: flex;background: #eee;border-bottom: 1px solid #ccc;}
+    .tab {
+      flex: 1;text-align: center;display: flex;
+      align-items: center;justify-content: center;
+      padding: 14px;cursor: pointer;font-weight: bold;font-size: 14px;
+      background: #e0e0e0;margin: 2px;border-radius: 6px 6px 0 0;
+    }
+    .tab.active {background: #4285f4;color: white;}
+    #content {padding: 20px;background: white;min-height: 400px;}
+    h2 {font-size: 20px;margin-top: 0;}
+
+    /* === Thumbnails (3 por linha) === */
+    .thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      justify-items: center;
+    }
+
+    .thumbnail-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fafafa;
+      cursor: pointer;
+      text-align: center;
+      width: 180px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .thumbnail-card:hover {
+      transform: scale(1.03);
+      background: #f0f0f0;
+    }
+
+    .thumbnail-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .thumbnail-card h3 {
+      margin: 8px 0 4px 0;
+      font-size: 12px;
+    }
+
+    .thumbnail-card p {
+      font-size: 10px;
+      color: #555;
+      margin: 0;
+    }
+
+    .chips {display: flex;flex-wrap: wrap;gap: 6px;margin-top: 10px;}
+    .chip {background: #e0f2f1;padding: 7px 12px;border-radius: 20px;font-size: 14px;}
+    a {color: #4285f4;text-decoration: none;}
+    a:hover {text-decoration: underline;}
+  </style>
+</head>
+<body>
+
+<header>Exposição MATEMATIVA</header>
+
+<div id="search-container">
+  <select id="typeSelect">
+    <option value="peca">Peça</option>
+    <option value="evento">Evento</option>
+    <option value="material">Material</option>
+  </select>
+  <input type="text" id="search" placeholder="Buscar peça, evento ou material...">
+</div>
+
+<div id="tabs"></div>
+<div id="content"></div>
+
+<script>
+const pecas = [
+  { id: 1, nome: "Mecanismo de Watt", descricao: "Peça que demonstra movimento plano a partir de ligações articuladas.", numero: "002", setor: "Geometria das Curvas", percurso: "Construção de Retas", eventos: [1,2], materiais: [1,2], imagens: ["../../../Figuras/P002.png"] },
+  { id: 2, nome: "Mecanismo de Tchebycheff", descricao: "Dispositivo para gerar movimento retilíneo perfeito.", numero: "003", setor: "Geometria das Curvas", percurso: "Construção de Retas", eventos: [1,3], materiais: [2], imagens: ["../../../Figuras/P003.png"] },
+  { id: 3, nome: "Mecanismo de Roberts", descricao: "Modelo tridimensional que ilustra sólidos semirregulares.", numero: "004", setor: "Geometria Espacial", percurso: "Poliedros", eventos: [2,3], materiais: [3], imagens: ["../../../Figuras/P004.png"] },
+  { id: 4, nome: "Mecanismo de Tchebycheff", descricao: "Modelo tridimensional que ilustra sólidos semirregulares.", numero: "005", setor: "Geometria Espacial", percurso: "Poliedros", eventos: [1,3], materiais: [1], imagens: ["../../../Figuras/P005.png"] }
+];
+
+const eventos = [
+  { id: 1, nome: "Semana da Matemática 2001", descricao: "Evento acadêmico no Departamento de Matemática.", numero: "000", local: "Departamento de Matemática", cidade: "Maringá - PR", pecas: [1,2,4], docs: [3], imagens: ["../../../Figuras/E000.jpg"] },
+  { id: 2, nome: "Usina de Conhecimento 2005", descricao: "Exposição de ciência e tecnologia em Maringá.", numero: "010", local: "Parque de Exposições", cidade: "Maringá - PR", pecas: [1,3], docs: [2], imagens: ["../../../Figuras/E002.jpg"] },
+  { id: 3, nome: "Mostra Interativa 2010", descricao: "Feira de matemática aplicada.", numero: "020", local: "Centro Cultural", cidade: "Curitiba - PR", pecas: [2,3,4], docs: [1], imagens: ["../../../Figuras/E003.png"] }
+];
+
+const materiais = [
+  { id: 1, nome: "Ficha Técnica 2025", link: "#", imagens: ["../../../Figuras/A009.png"] },
+  { id: 2, nome: "Display 2025", link: "#", imagens: ["../../../Figuras/A007.png"]},
+  { id: 3, nome: "Cartaz Semana 2001", link: "#", imagens: ["../../../Figuras/E000_2.png"] }
+];
+
+let currentType = "peca";
+let currentId = 1;
+let currentTab = "overview";
+
+function showAll(type, list = null) {
+  const content = document.getElementById("content");
+  let html = `<h2>Todos os ${type === 'peca' ? 'Itens do Acervo' : type === 'evento' ? 'Eventos' : 'Materiais'}</h2><div class='thumbnail-grid'>`;
+
+  if (type === "peca") {
+    const arr = list || pecas;
+    arr.forEach(p => {
+      html += `<div class="thumbnail-card" onclick="openItem('peca',${p.id})">
+        <img src="${p.imagens[0]}" alt="${p.nome}">
+        <h3>${p.nome}</h3>
+        <p>${p.descricao}</p>
+      </div>`;
+    });
+  } else if (type === "evento") {
+    const arr = list || eventos;
+    arr.forEach(e => {
+      html += `<div class="thumbnail-card" onclick="openItem('evento',${e.id})">
+        <img src="${e.imagens[0]}" alt="${e.nome}">
+        <h3>${e.nome}</h3>
+        <p>${e.cidade}</p>
+      </div>`;
+    });
+  } else if (type === "material") {
+    const arr = list || materiais;
+    arr.forEach(m => {
+      html += `<div class="thumbnail-card" onclick="openItem('material',${m.id})">
+        ${m.imagens ? `<img src="${m.imagens[0]}" alt="${m.nome}">` : ""}
+        <h3>${m.nome}</h3>
+        <p><a href="${m.link}" target="_blank">Abrir material</a></p>
+      </div>`;
+    });
+  }
+
+  html += "</div>";
+  document.getElementById("tabs").innerHTML = "";
+  content.innerHTML = html;
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  let item;
+  if (currentType === "peca") item = pecas.find(pc => pc.id === currentId);
+  else if (currentType === "evento") item = eventos.find(e => e.id === currentId);
+  else if (currentType === "material") item = materiais.find(m => m.id === currentId);
+
+  const titleHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:120px;background:#f0f0f0;border-right:1px solid #ccc;padding:6px;flex-shrink:0;">
+      ${item.imagens ? `<div style='width:60px;height:50px;overflow:hidden;border-radius:8px;margin-bottom:3px;'><img src='${item.imagens[0]}' alt='${item.nome}' style='width:100%;height:100%;object-fit:contain;'></div>` : ""}
+      <div style='font-size:10px;color:#333;text-align:center;'>${item.nome}</div>
+    </div>`;
+
+  let tabsHTML = "";
+  if (currentType === "peca") {
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='events'?'active':''}" data-tab="events">Eventos</div>
+      <div class="tab ${currentTab==='materiais'?'active':''}" data-tab="materiais">Materiais</div>`;
+  } else if (currentType === "evento") {
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='pecas'?'active':''}" data-tab="pecas">Peças</div>
+      <div class="tab ${currentTab==='docs'?'active':''}" data-tab="docs">Materiais</div>`;
+  } else if (currentType === "material") {
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='pecas'?'active':''}" data-tab="pecas">Peças</div>
+      <div class="tab ${currentTab==='eventos'?'active':''}" data-tab="eventos">Eventos</div>`;
+  }
+
+  tabs.innerHTML = `<div style="display:flex;align-items:stretch;width:100%;">${titleHTML}<div style="display:flex;flex:1;">${tabsHTML}</div></div>`;
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      currentTab = t.dataset.tab;
+      renderTabs(); renderContent();
+    });
+  });
+}
+
+function renderContent() {
+  const content = document.getElementById("content");
+
+  if (currentType === "peca") {
+    const p = pecas.find(pc => pc.id === currentId);
+    if (currentTab === "overview") {
+      content.innerHTML = `<h2>${p.nome}</h2><div class="img-box"><img src="${p.imagens[0]}" alt="${p.nome}"></div><p>${p.descricao}</p>
+      <div class="chips"><div class="chip">Número: ${p.numero}</div><div class="chip">Setor: ${p.setor}</div><div class="chip">Percurso: ${p.percurso}</div></div>`;
+    } else if (currentTab === "events") {
+      let html = "<h2>Eventos</h2><div class='thumbnail-grid'>";
+      p.eventos.forEach(eid => {
+        const ev = eventos.find(e => e.id === eid);
+        html += `<div class="thumbnail-card" onclick="openItem('evento',${ev.id})"><img src="${ev.imagens[0]}" alt="${ev.nome}"><h3>${ev.nome}</h3><p>${ev.local} • ${ev.cidade}</p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    } else if (currentTab === "materiais") {
+      let html = "<h2>Materiais</h2><div class='thumbnail-grid'>";
+      p.materiais.forEach(mid => {
+        const m = materiais.find(mt => mt.id === mid);
+        html += `<div class="thumbnail-card" onclick="openItem('material',${m.id})">${m.imagens ? `<img src="${m.imagens[0]}" alt="${m.nome}">` : ""}<h3>${m.nome}</h3><p><a href="${m.link}" target="_blank">Abrir material</a></p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    }
+  }
+
+  else if (currentType === "evento") {
+    const ev = eventos.find(e => e.id === currentId);
+    if (currentTab === "overview") {
+      content.innerHTML = `<h2>${ev.nome}</h2><div class="img-box"><img src="${ev.imagens[0]}" alt="${ev.nome}"></div><p>${ev.descricao}</p>
+      <div class="chips"><div class="chip">Número: ${ev.numero}</div><div class="chip">Local: ${ev.local}</div><div class="chip">Cidade: ${ev.cidade}</div></div>`;
+    } else if (currentTab === "pecas") {
+      let html = "<h2>Peças neste Evento</h2><div class='thumbnail-grid'>";
+      ev.pecas.forEach(pid => {
+        const p = pecas.find(pc => pc.id === pid);
+        html += `<div class="thumbnail-card" onclick="openItem('peca',${p.id})"><img src="${p.imagens[0]}" alt="${p.nome}"><h3>${p.nome}</h3><p>${p.descricao}</p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    } else if (currentTab === "docs") {
+      let html = "<h2>Materiais</h2><div class='thumbnail-grid'>";
+      ev.docs.forEach(mid => {
+        const m = materiais.find(mt => mt.id === mid);
+        html += `<div class="thumbnail-card" onclick="openItem('material',${m.id})">${m.imagens ? `<img src="${m.imagens[0]}" alt="${m.nome}">` : ""}<h3>${m.nome}</h3><p><a href="${m.link}" target="_blank">Abrir material</a></p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    }
+  }
+
+  else if (currentType === "material") {
+    const m = materiais.find(mt => mt.id === currentId);
+    if (currentTab === "overview") {
+      content.innerHTML = `<h2>${m.nome}</h2>${m.imagens ? `<div class="img-box"><img src="${m.imagens[0]}" alt="${m.nome}"></div>` : ""}<p><a href="${m.link}" target="_blank">Abrir material</a></p>`;
+    } else if (currentTab === "pecas") {
+      let html = "<h2>Peças relacionadas</h2><div class='thumbnail-grid'>";
+      const relacionadas = pecas.filter(p => p.materiais.includes(m.id));
+      relacionadas.forEach(p => {
+        html += `<div class="thumbnail-card" onclick="openItem('peca',${p.id})"><img src="${p.imagens[0]}" alt="${p.nome}"><h3>${p.nome}</h3><p>${p.descricao}</p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    } else if (currentTab === "eventos") {
+      let html = "<h2>Eventos relacionados</h2><div class='thumbnail-grid'>";
+      const pecasRelacionadas = pecas.filter(p => p.materiais.includes(m.id));
+      const eventosUnicos = [...new Set(pecasRelacionadas.flatMap(p => p.eventos))];
+      eventosUnicos.forEach(eid => {
+        const ev = eventos.find(e => e.id === eid);
+        html += `<div class="thumbnail-card" onclick="openItem('evento',${ev.id})"><img src="${ev.imagens[0]}" alt="${ev.nome}"><h3>${ev.nome}</h3><p>${ev.cidade}</p></div>`;
+      });
+      html += "</div>";
+      content.innerHTML = html;
+    }
+  }
+}
+
+function openItem(type, id) {
+  currentType = type; currentId = id; currentTab = "overview";
+  renderTabs(); renderContent();
+}
+
+document.getElementById("search").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const query = e.target.value.toLowerCase().trim();
+    const type = document.getElementById("typeSelect").value;
+    if (query === "") { showAll(type); return; }
+
+    if (type === "peca") {
+      const results = pecas.filter(pc => pc.nome.toLowerCase().includes(query));
+      if (results.length === 1) openItem("peca", results[0].id);
+      else if (results.length > 1) showAll("peca", results);
+      else alert("Peça não encontrada.");
+    } else if (type === "evento") {
+      const results = eventos.filter(ev => ev.nome.toLowerCase().includes(query));
+      if (results.length === 1) openItem("evento", results[0].id);
+      else if (results.length > 1) showAll("evento", results);
+      else alert("Evento não encontrado.");
+    } else if (type === "material") {
+      const results = materiais.filter(mt => mt.nome.toLowerCase().includes(query));
+      if (results.length === 1) openItem("material", results[0].id);
+      else if (results.length > 1) showAll("material", results);
+      else alert("Material não encontrado.");
+    }
+  }
+});
+
+renderTabs(); renderContent();
+</script>
+</body>
+</html>
