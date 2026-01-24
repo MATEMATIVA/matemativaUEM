@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Exposição MATEMATIVA — Acervo</title>
+<style>
+:root{
+  --azul-principal: #001a80;
+  --azul-claro: #0022aa;
+  --bg: #f0f2f8;
+  --card-bg: rgba(255,255,255,0.97);
+  --chip-bg: rgba(255,255,255,0.06);
+}
+*{box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:var(--bg);-webkit-font-smoothing:antialiased;color:#111}
+header{background:var(--azul-principal);height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.25)}
+header img{height:100%;object-fit:contain;display:block}
+
+/* search */
+#search-container{background:var(--azul-principal);padding:8px;display:flex;gap:8px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.06)}
+#typeSelect{padding:8px;font-size:13px;border-radius:6px;border:1px solid #ccc;background:white}
+#search{flex:1;padding:8px;font-size:14px;border-radius:6px;border:1px solid #ccc}
+
+/* fallback file inputs */
+#fileFallback{display:none; gap:8px; align-items:center; color:white;}
+
+/* tabs */
+.tab-container{display:flex;align-items:stretch;width:100%}
+.tab-image-box{
+  width:60px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:#f0f0f0;
+  border-right:1px solid #ccc;
+  padding:2px; /* mínimo possível */
+  flex-shrink:0;
+}
+.tab-image-box img{
+  width:85%;
+  height:36px; /* menor miniatura */
+  object-fit:contain;
+  border-radius:3px;
+  margin-bottom:1px; /* praticamente colado */
+}
+.tab-image-box .tab-name{
+  font-size:9px;
+  text-align:center;
+  color:#333;
+  line-height:1;
+  margin:0;
+}
+
+.tabs-flex{
+  display:flex;
+  flex:1;
+  height:38px; /* altura fixa da barra */
+}
+
+.tab{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:4px 6px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:11px;
+  background:#e8e8e8;
+  margin:1px;
+  border-radius:4px 4px 0 0;
+  transition:all .12s;
+  line-height:1;
+  height:100%;
+}
+.tab.active{
+  background:var(--azul-principal);
+  color:#fff;
+  transform:none;
+  box-shadow:inset 0 -2px 0 rgba(255,255,255,0.3);
+}
+
+
+/* content */
+#content{padding:18px;min-height:420px;background:linear-gradient(to bottom, var(--azul-principal) 50%, var(--azul-claro));color:#fff;transition:opacity .12s}
+#content h2{margin:0 0 12px 0;font-size:22px;text-shadow:0 1px 3px rgba(0,0,0,0.2)}
+
+/* layout visão geral: esquerda imagem, direita ficha */
+.overview-grid{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.photo-box {width:320px;min-width: 240px;background:white;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.18);color:#111}
+.photo-box img{height: 150px;width: auto;display:block;border-radius:6px;object-fit:contain}
+.album-link{margin-top:8px;display:block;text-align:center}
+.album-link a{display:inline-block;padding:8px 12px;border-radius:6px;border:2px solid var(--azul-principal);background:white;color:var(--azul-principal);text-decoration:none;font-weight:700}
+.ficha{flex:1;min-width:260px;background:rgba(255,255,255,0.06);padding:12px;border-radius:10px}
+.ficha .row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.ficha label{width:220px;font-weight:700}
+.ficha .value{flex:1}
+.ficha .value p{margin:0;color:#fff}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--chip-bg);padding:8px 12px;border-radius:18px;color:#fff;font-weight:600;border:1px solid rgba(255,255,255,0.08)}
+
+/* thumbnails */
+.thumbnail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:12px;align-items:start}
+.thumbnail-card{background:var(--card-bg);padding:10px;border-radius:10px;text-align:center;color:#111;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.08);transition:transform .12s,box-shadow .12s}
+.thumbnail-card:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.12)}
+.thumbnail-card img{width:100%;height:120px;object-fit:contain;border-radius:8px;display:block;margin-bottom:8px}
+.thumbnail-card h3{margin:6px 0 4px 0;font-size:14px;color:var(--azul-principal)}
+.thumbnail-card p{margin:0;font-size:12px;color:#444}
+
+/* album wrapper (hidden scrollbar) */
+.album-wrapper{display:flex;gap:8px;overflow:hidden}
+.album-item{flex:0 0 auto;width:240px;height:160px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff}
+.album-item img{width:100%;height:100%;object-fit:contain;display:block}
+.album-arrow{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);color:white;border:none;cursor:pointer;z-index:10}
+.album-arrow.left{left:12px}
+.album-arrow.right{right:12px}
+
+/* small screens */
+@media(max-width:900px){
+  .overview-grid{flex-direction:column}
+  .photo-box{width:100%}
+  .ficha{width:100%}
+  #content{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Ajuste o caminho local do topo se necessário -->
+  <img id="topoLogo" src="Figuras/A008_topo.png" alt="MATEMATIVA">
+</header>
+
+<div id="search-container">
+  <select id="typeSelect">
+    <option value="peca">Peça</option>
+    <option value="evento">Evento</option>
+    <option value="material">Material</option>
+  </select>
+  <input id="search" type="text" placeholder="Buscar peça, evento ou material..." />
+  <div id="fileFallback">
+    <label style="font-size:13px; font-weight:700; color:white">Se fetch falhar, carregue os TSVs:</label>
+    <input id="fileAcervo" type="file" accept=".tsv,.txt" />
+    <input id="fileEventos" type="file" accept=".tsv,.txt" />
+    <button id="btnLoadFiles">Carregar</button>
+  </div>
+</div>
+
+<div id="tabs"></div>
+<div id="content" role="main"></div>
+
+<script>
+// --- controle de modo (para incorporação) ---
+const params = new URLSearchParams(window.location.search);
+const modo = params.get("modo");
+const itemId = params.get("id");
+
+// esconder topo e busca quando embutido
+window.addEventListener("DOMContentLoaded", () => {
+  if (modo) {
+    const header = document.querySelector("header");
+    const search = document.getElementById("search-container");
+    if (header) header.style.display = "none";
+    if (search) search.style.display = "none";
+    document.body.style.background = "#fff";
+  }
+});
+
+// após carregar TSVs
+function iniciarInterface() {
+ if (modo === "acervo") {
+  showAll("peca");
+} else if (modo === "eventos") {
+  showAll("evento");
+} else if (modo === "materiais") {
+  // Filtra apenas materiais com Setor = "Apresentação"
+  const materiaisApresentacao = materiais.filter(
+    m => (m.setor || '').trim().toLowerCase() === 'apresentação'
+  );
+  showAll("material", materiaisApresentacao);
+} else if (modo === "item" && itemId) {
+  const tipo =
+    pecabyNumber[itemId] ? "peca" :
+    materialByNumber[itemId] ? "material" :
+    eventos.find(e => e.codigo === itemId) ? "evento" : "peca";
+  openItem(tipo, itemId);
+} else {
+  showAll("peca");
+}
+
+}
+
+
+/*
+  matemativa.html
+  Lê:
+   - Acervo da MATEMATIVA.tsv
+   - Eventos da MATEMATIVA.tsv
+  Ambos na mesma pasta do HTML. Imagens em ./Figuras/<Número>.png (fallback .jpg).
+  Cruzamentos:
+   - Peça <-> Material (Acessórios)
+   - Peça <-> Evento (campo Eventos com códigos; ou colunas E###)
+   - Material <-> Evento (direto se material.eventos, senão deriva das peças que usam o material)
+*/
+
+const ACERVO_FILE = 'Acervo da MATEMATIVA.tsv';
+const EVENTOS_FILE = 'Eventos da MATEMATIVA.tsv';
+let rawAcervoText = null;
+let rawEventosText = null;
+let acervoRows = [], eventosRows = [];
+let pecas = [], materiais = [], eventos = [];
+let currentType = 'peca', currentId = null, currentTab = 'overview';
+
+/* ---------- utils ---------- */
+function trimStr(s){ return (s||'').toString().trim(); }
+function truthyVal(v){ if(v==null) return false; v = v.toString().trim().toLowerCase(); return v === 'true' || v==='1' || v==='x' || v==='yes' || v==='y' || v==='sim' }
+function safeGet(obj, key){ return obj && (key in obj) ? obj[key] : ''; }
+
+/* parse TSV robusto (aceita ; ou , se não tiver tabs) */
+function parseTSV(text){
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);
+  if(lines.length===0) return [];
+  let headerLine = lines[0];
+  let sep = '\t';
+  if(!headerLine.includes('\t')){
+    if(headerLine.includes(';')) sep=';';
+    else if(headerLine.includes(',')) sep=',';
+  }
+  const headers = headerLine.split(sep).map(h=>h.trim());
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const cols = lines[i].split(sep);
+    while(cols.length < headers.length) cols.push('');
+    const obj = {};
+    for(let j=0;j<headers.length;j++){
+      obj[headers[j]] = cols[j] !== undefined ? cols[j].trim() : '';
+    }
+    rows.push(obj);
+  }
+  return rows;
+}
+
+/* find header ignoring case/spaces */
+function findHeader(objRow, candidateArray){
+  if(!objRow) return null;
+  const keys = Object.keys(objRow);
+  const lowered = keys.map(k=>k.toLowerCase().replace(/\s+/g,''));
+  for(const cand of candidateArray){
+    const c = cand.toLowerCase().replace(/\s+/g,'');
+    const idx = lowered.indexOf(c);
+    if(idx>=0) return keys[idx];
+  }
+  return null;
+}
+
+/* image base from number -> 'Figuras/<num>' (we append .png on render with fallback .jpg) */
+function imageSrcFromNumber(num){
+  if(!num) return '';
+  const clean = num.toString().trim();
+  if(clean.match(/\.(png|jpg|jpeg)$/i) || clean.includes('/') || clean.includes('\\')) return clean;
+  return 'Figuras/' + clean;
+}
+
+/* ---------- carregamento automático (fetch) ou fallback file inputs ---------- */
+async function tryAutoLoad(){
+  try {
+    const respA = await fetch(ACERVO_FILE);
+    if(!respA.ok) throw new Error('fail acervo fetch');
+    rawAcervoText = await respA.text();
+    const respE = await fetch(EVENTOS_FILE);
+    if(!respE.ok) throw new Error('fail eventos fetch');
+    rawEventosText = await respE.text();
+    initFromText();
+  } catch(err){
+    console.warn('Auto load failed (fetch). Usar fallback manual:', err);
+    document.getElementById('fileFallback').style.display = 'flex';
+  }
+}
+
+document.getElementById('btnLoadFiles').addEventListener('click', ()=>{
+  const fA = document.getElementById('fileAcervo').files[0];
+  const fE = document.getElementById('fileEventos').files[0];
+  if(!fA || !fE){ alert('Selecione os dois arquivos (Acervo e Eventos).'); return; }
+  Promise.all([fileToText(fA), fileToText(fE)]).then(([ta,te])=>{
+    rawAcervoText = ta; rawEventosText = te; initFromText();
+  }).catch(e=>{ alert('Erro ao ler arquivos: '+e); });
+});
+
+function fileToText(file){
+  return new Promise((res,rej)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>res(fr.result);
+    fr.onerror = ()=>rej(fr.error);
+    fr.readAsText(file,'utf-8');
+  });
+}
+
+/* ---------- inicialização dos dados ---------- */
+function initFromText(){
+  try {
+    acervoRows = parseTSV(rawAcervoText);
+    eventosRows = parseTSV(rawEventosText);
+
+    // detectar colunas E### no acervo
+    const acHeaders = Object.keys(acervoRows[0] || {});
+    const eventHeaders = acHeaders.filter(h => /^E\d{1,3}$/i.test(h.trim()) || /^E0*\d{1,3}$/i.test(h.trim()));
+
+    // montar mapa de eventos a partir do arquivo de eventos
+    const codeHeader = findHeader(eventosRows[0] || {}, ['Código','Codigo','Code']);
+    const eventNameHeader = findHeader(eventosRows[0] || {}, ['Evento','Nome','Event']);
+    const eventFotoHeader = findHeader(eventosRows[0] || {}, ['Link Fotos','LinkFotos','GOOGLE FOTOS - LINK','Link Fotos']);
+    const eventLocal = findHeader(eventosRows[0] || {}, ['Local','Venue']);
+    const eventCity = findHeader(eventosRows[0] || {}, ['Cidade','City']);
+    const eventInicio = findHeader(eventosRows[0] || {}, ['Data de Início','DataInicio','Start Date']);
+    const eventFim = findHeader(eventosRows[0] || {}, ['Data de Término','DataTermino','End Date']);
+
+    const eventMapByCode = {};
+    eventosRows.forEach(er=>{
+      const code = safeGet(er, codeHeader) || safeGet(er,'Código') || safeGet(er,'Codigo') || '';
+      const codeNum = (code||'').toString().trim();
+      if(!codeNum) return;
+      const baseImg = imageSrcFromNumber(codeNum);
+      eventMapByCode[codeNum] = {
+        codigo: codeNum,
+        nome: safeGet(er, eventNameHeader) || safeGet(er,'Evento') || '',
+        linkFotos: safeGet(er,eventFotoHeader) || '',
+        local: safeGet(er,eventLocal) || '',
+        cidade: safeGet(er,eventCity) || '',
+        inicio: safeGet(er,eventInicio) || '',
+        fim: safeGet(er,eventFim) || '',
+        imagens: [baseImg],
+        raw: er
+      };
+    });
+
+    // headers do acervo
+    const tipoHeader = findHeader(acervoRows[0]||{}, ['Tipo','TIPO']);
+    const nomeHeader = findHeader(acervoRows[0]||{}, ['Nome','NOME','Name','Peça','PEÇA']);
+    const numeroHeader = findHeader(acervoRows[0]||{}, ['Número','Numero','Nº','N']);
+    const fotoHeader = findHeader(acervoRows[0]||{}, ['Foto','FOTO','Imagem','Image']);
+    const linkFotosHeader = findHeader(acervoRows[0]||{}, ['Link Fotos','LinkFotos','GOOGLE FOTOS - LINK','Link Fotos']);
+    const linkDriveHeader = findHeader(acervoRows[0]||{}, ['Link IG']);
+    const descHeader = findHeader(acervoRows[0]||{}, ['Descrição','Descricao','Description']);
+    const objetivoHeader = findHeader(acervoRows[0]||{}, ['Objetivo']);
+    const comoHeader = findHeader(acervoRows[0]||{}, ['Como Funciona?','Como Funciona','Como Funciona']);
+    const conceitosHeader = findHeader(acervoRows[0]||{}, ['Conceitos Chave','Conceitos-chave','Conceitos Chave','Conceitos']);
+    const setorHeader = findHeader(acervoRows[0]||{}, ['Setor','SETOR']);
+    const percursoHeader = findHeader(acervoRows[0]||{}, ['Percurso','PERCURSO']);
+    const acessoriosHeader = findHeader(acervoRows[0]||{}, ['Acessórios','Acessorios','ACESSÓRIOS','ACESSORIOS']);
+    const dimHeader = findHeader(acervoRows[0]||{}, ['Dimensões (L x C x A)','Dimensões','Dimensoes']);
+    const eventosFieldHeader = findHeader(acervoRows[0]||{}, ['Eventos','Eventos (codes)','Eventos (códigos)','Eventos (códigos)']);
+
+    pecas = []; materiais = [];
+
+    acervoRows.forEach(row=>{
+      const tipo = (safeGet(row, tipoHeader) || '').toString().toLowerCase();
+      const nome = safeGet(row, nomeHeader) || '';
+      const numero = safeGet(row, numeroHeader) || '';
+      const fotoRaw = safeGet(row, fotoHeader) || '';
+      const linkFotos = safeGet(row, linkFotosHeader) || '';
+      const linkIG = safeGet(row, linkDriveHeader) || '';
+      const desc = safeGet(row, descHeader) || '';
+      const objetivo = safeGet(row, objetivoHeader) || '';
+      const como = safeGet(row, comoHeader) || '';
+      const conceitos = safeGet(row, conceitosHeader) || '';
+      const setor = safeGet(row, setorHeader) || '';
+      const percurso = safeGet(row, percursoHeader) || '';
+      const acessorios = safeGet(row, acessoriosHeader) || '';
+      const dim = safeGet(row, dimHeader) || '';
+      const eventosField = safeGet(row, eventosFieldHeader) || '';
+
+      // imagens base a partir do campo Número (preferido)
+      const images = [];
+      if(numero){
+        const base = imageSrcFromNumber(numero);
+        images.push(base); // will append .png/.jpg when rendering
+      } else if(fotoRaw){
+        const sep = fotoRaw.includes(';') ? ';' : (fotoRaw.includes(',') ? ',' : (fotoRaw.includes('|') ? '|' : null));
+        if(sep){
+          fotoRaw.split(sep).map(s=>s.trim()).filter(Boolean).forEach(s=> images.push(s));
+        } else if(fotoRaw) images.push(fotoRaw);
+      }
+
+      const album = linkFotos && linkFotos.length>3 ? linkFotos : '';
+
+      // eventos: prefer field 'Eventos' (códigos separados por ';'), senão varre colunas E###
+      let evCodes = [];
+      if(eventosField && eventosField.trim().length>0){
+        evCodes = eventosField.split(';').map(x=>x.trim()).filter(Boolean).map(x => (''+x).replace(/^E0*/i,'').replace(/^E/i,''));
+      } else {
+        eventHeaders.forEach(h=>{
+          const v = safeGet(row,h);
+          if(truthyVal(v)){
+            const code = (''+h).replace(/^E0*/i,'').replace(/^E/i,'').trim();
+            if(code) evCodes.push(code);
+          }
+        });
+      }
+
+      const baseObj = {
+        raw: row,
+        tipoRaw: tipo,
+        tipo: guessTipo(tipo, row),
+        nome: nome,
+        numero: numero,
+        imagens: images,
+        album: album,
+  	linkIG: linkIG,
+        descricao: desc,
+        objetivo: objetivo,
+        como: como,
+        conceitos: conceitos,
+        setor: setor,
+        percurso: percurso,
+        acessoriosCampo: acessorios,
+        acessorios: (acessorios||'').split(';').map(x=>x.trim()).filter(Boolean),
+        dimensoes: dim,
+        eventos: evCodes // array of code strings
+      };
+
+      if(baseObj.tipo === 'material') materiais.push(baseObj);
+      else pecas.push(baseObj);
+    });
+
+    // construir array de eventos a partir do eventMapByCode
+    eventos = Object.values(eventMapByCode);
+
+    // lookups
+    buildLookups();
+
+        // inicializar UI
+    currentType = 'peca';
+    currentTab = 'overview';
+    currentId = (pecas[0] && (pecas[0].numero || pecas[0].nome)) || null;
+    attachSearch();
+    iniciarInterface();
+
+  } catch(e){
+    console.error('Init error', e);
+    alert('Erro ao processar os TSVs: ' + e);
+  }
+}
+
+/* guess tipo */
+function guessTipo(tipoStr, row){
+  if(!tipoStr) return 'peca';
+  const s = tipoStr.toString().toLowerCase();
+  if(s.includes('mat') || s.includes('material') || s.includes('acess')) return 'material';
+  if(s.includes('pe') || s.includes('peça') || s.includes('peca')) return 'peca';
+  const name = ((safeGet(row,'Nome')||'') + '').toLowerCase();
+  if(name.includes('display') || name.includes('ficha') || name.includes('cartaz') || name.includes('poster')) return 'material';
+  return 'peca';
+}
+
+/* lookups */
+let materialByNumber = {}, materialByName = {}, pecabyNumber = {}, pecabyName = {};
+function buildLookups(){
+  materialByNumber = {}; materialByName = {};
+  pecabyNumber = {}; pecabyName = {};
+  materiais.forEach(m=>{
+    const key = (m.numero || '').toString().trim();
+    if(key) materialByNumber[key] = m;
+    materialByName[(m.nome||'').toLowerCase().trim()] = m;
+  });
+  pecas.forEach(p=>{
+    const key = (p.numero || '').toString().trim();
+    if(key) pecabyNumber[key] = p;
+    pecabyName[(p.nome||'').toLowerCase().trim()] = p;
+  });
+}
+
+/* ---------- UI render ---------- */
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  let item = null;
+  if(currentType === 'peca') item = getPieceById(currentId);
+  else if(currentType === 'evento') item = getEventById(currentId);
+  else if(currentType === 'material') item = getMaterialById(currentId);
+  if(!item) item = (currentType==='peca' ? (pecas[0]||null) : currentType==='material' ? (materiais[0]||null) : (eventos[0]||null));
+  const titleHTML = `
+    <div class="tab-image-box">
+      ${item && item.imagens && item.imagens[0] ? `<img src="${item.imagens[0]}.png" alt="${escapeHtml(item.nome||'')}" onerror="this.onerror=null;this.src='${item.imagens[0]}.jpg'">` : ''}
+      <div class="tab-name">${item ? escapeHtml(item.numero || item.codigo || '') : ''}</div>
+    </div>
+  `;
+  let tabsHTML = '';
+  if(currentType === 'peca'){
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='events'?'active':''}" data-tab="events">Eventos</div>
+      <div class="tab ${currentTab==='materiais'?'active':''}" data-tab="materiais">Materiais</div>
+    `;
+  } else if(currentType === 'evento'){
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='pecas'?'active':''}" data-tab="pecas">Peças</div>
+      <div class="tab ${currentTab==='docs'?'active':''}" data-tab="docs">Materiais</div>
+    `;
+  } else {
+    tabsHTML = `
+      <div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">Visão Geral</div>
+      <div class="tab ${currentTab==='pecas'?'active':''}" data-tab="pecas">Peças</div>
+      <div class="tab ${currentTab==='eventos'?'active':''}" data-tab="eventos">Eventos</div>
+    `;
+  }
+  tabs.innerHTML = `<div class="tab-container">${titleHTML}<div class="tabs-flex">${tabsHTML}</div></div>`;
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      currentTab = t.dataset.tab;
+      renderTabs(); renderContent();
+    });
+  });
+}
+
+/* getters */
+function getPieceById(id){
+  if(!id) return pecas[0] || null;
+  if(pecabyNumber[id]) return pecabyNumber[id];
+  return pecas.find(p => (p.nome||'').toString().toLowerCase() === (id||'').toString().toLowerCase()) || pecas[0] || null;
+}
+function getMaterialById(id){
+  if(!id) return materiais[0] || null;
+  if(materialByNumber[id]) return materialByNumber[id];
+  return materiais.find(m => (m.nome||'').toString().toLowerCase() === (id||'').toString().toLowerCase()) || materiais[0] || null;
+}
+function getEventById(id){
+  if(!id) return eventos[0] || null;
+  return eventos.find(e => (e.codigo||'').toString() === id.toString() || (e.nome||'').toString().toLowerCase() === (id||'').toString().toLowerCase()) || eventos[0] || null;
+}
+
+/* render content */
+function renderContent(){
+  const content = document.getElementById('content');
+  content.style.opacity = 0;
+  setTimeout(()=>{
+    let item = null;
+    if(currentType === 'peca') item = getPieceById(currentId);
+    else if(currentType === 'evento') item = getEventById(currentId);
+    else if(currentType === 'material') item = getMaterialById(currentId);
+
+    if(!item){ content.innerHTML = '<h2>Nenhum item selecionado</h2>'; content.style.opacity = 1; return; }
+
+    if(currentTab === 'overview'){
+
+      let html = `<h2>${escapeHtml(item.nome||item.codigo||'')}</h2>`;
+      html += `<div class="overview-grid">`;
+      // left photo box
+html += `<div class="photo-box">`;
+const firstBase = (item.imagens && item.imagens[0]) ? item.imagens[0] : '';
+const driveLink = item.linkIG && item.linkIG.trim().length > 5
+  ? item.linkIG
+  : null;
+
+console.log('DEBUG LINK', {
+  tipo: currentType,
+  numero: item.numero,
+  linkIG: item.linkIG,
+  album: item.album
+});
+
+
+if(firstBase){
+  if(driveLink){
+    html += `
+      <a href="${driveLink}" target="_blank" rel="noopener noreferrer">
+        <img src="${firstBase}.png"
+             alt="${escapeHtml(item.nome||'')}"
+             onerror="this.onerror=null;this.src='${firstBase}.jpg'">
+      </a>`;
+  } else {
+    html += `
+      <img src="${firstBase}.png"
+           alt="${escapeHtml(item.nome||'')}"
+           onerror="this.onerror=null;this.src='${firstBase}.jpg'">`;
+  }
+} else {
+  html += `
+    <div style="width:100%;height:160px;
+                display:flex;align-items:center;
+                justify-content:center;color:#666">
+      Sem imagem
+    </div>`;
+}
+
+      if(item.album && item.album.trim().length>5){
+        html += `<div class="album-link"><a href="${item.album}" target="_blank" rel="noopener noreferrer">Ver álbum</a></div>`;
+      }
+      html += `</div>`; // photo-box
+
+      // right ficha
+      html += `<div class="ficha">`;
+      if(currentType === 'peca' || currentType === 'material'){
+        const fields = [
+          {label: currentType === 'peca' ? 'Peça:' : 'Material:', key: 'nome'},
+          {label: 'Setor:', key: 'setor'},
+          {label: 'Percurso:', key: 'percurso'},
+          {label: 'Nome Genérico:', key: 'nome'},
+          {label: 'Descrição:', key: 'descricao'},
+          {label: 'Objetivo:', key: 'objetivo'},
+          {label: 'Como funciona?:', key: 'como'},
+          {label: 'Dimensões (LxCxA):', key: 'dimensoes'},
+          {label: 'Tipo de Interação:', key: 'tipoRaw'},
+          {label: 'Conceitos-chave:', key: 'conceitos'},
+          {label: 'Público:', key: 'publico'},
+          {label: 'Complementos:', key: 'acessoriosCampo'}
+        ];
+        fields.forEach(f=>{
+          const val = safeGet(item, f.key) || '';
+          html += `<div class="row"><label>${f.label}</label><div class="value"><p>${escapeHtml(val||'—')}</p></div></div>`;
+        });
+      } else if(currentType === 'evento'){
+        html += `<div class="row"><label>Evento:</label><div class="value"><p>${escapeHtml(item.nome)}</p></div></div>`;
+        html += `<div class="row"><label>Local:</label><div class="value"><p>${escapeHtml(item.local||'')}</p></div></div>`;
+        html += `<div class="row"><label>Cidade:</label><div class="value"><p>${escapeHtml(item.cidade||'')}</p></div></div>`;
+        html += `<div class="row"><label>Data:</label><div class="value"><p>${escapeHtml(item.inicio||'')} — ${escapeHtml(item.fim||'')}</p></div></div>`;
+        html += `<div class="row"><label>Link álbum:</label><div class="value"><p>${item.linkFotos?`<a href="${item.linkFotos}" target="_blank" rel="noopener noreferrer" style="color:#fff;text-decoration:underline">Ver álbum</a>`:'—'}</p></div></div>`;
+      }
+
+      // chips
+      html += `<div class="chips">`;
+      if(item.numero) html += `<div class="chip">Número: ${escapeHtml(item.numero)}</div>`;
+      if(item.setor) html += `<div class="chip">Setor: ${escapeHtml(item.setor)}</div>`;
+      if(item.percurso) html += `<div class="chip">Percurso: ${escapeHtml(item.percurso)}</div>`;
+      html += `</div>`;
+
+      html += `</div>`; // ficha
+      html += `</div>`; // overview-grid
+      content.innerHTML = html;
+    } else {
+
+     // outras abas (listar relações)
+let html = '';
+
+function thumb(imgBase, codigo, nome, descricao, tipo, clickType, clickId){
+  const src = imgBase ? `${imgBase}.png` : '';
+  const fallback = imgBase ? `${imgBase}.jpg` : '';
+  return `
+    <div class="thumbnail-card" onclick="openItem('${clickType}','${escapeAttr(clickId)}')">
+      ${imgBase ? `<img src="${src}" onerror="if(!this.src.endsWith('.jpg')) this.src='${fallback}'">` : ''}
+      <h3>${escapeHtml(codigo || '—')}</h3>
+      <p>${escapeHtml(nome || descricao || '')}</p>
+    </div>`;
+}
+
+if(currentType === 'peca'){
+  if(currentTab === 'events'){
+    const codes = item.eventos || [];
+    const list = codes.map(c=> eventByCode(''+c)).filter(Boolean);
+    html = list.length ? `<div class="thumbnail-grid">` +
+      list.map(ev => thumb(ev.imagens && ev.imagens[0], ev.codigo, ev.nome, ev.cidade, 'evento', 'evento', ev.codigo)).join('') +
+      `</div>` : '<p>Nenhum evento encontrado.</p>';
+  } 
+  else if(currentTab === 'materiais'){
+    const arr = (item.acessorios || []);
+    const list = arr.map(token=>{
+      const m1 = materialByNumber[token];
+      if(m1) return m1;
+      const nm = token.toLowerCase();
+      return materiais.find(x=> (x.nome||'').toLowerCase()===nm || (x.numero||'')===token) || null;
+    }).filter(Boolean);
+    html = list.length ? `<div class="thumbnail-grid">` +
+      list.map(m => thumb(m.imagens && m.imagens[0], m.numero, m.nome, '', 'material', 'material', m.numero||m.nome)).join('') +
+      `</div>` : '<p>Nenhum material vinculado.</p>';
+  }
+}
+else if(currentType === 'evento'){
+  if(currentTab === 'pecas'){
+    let list = (item.pecas || []).map(code => pecabyNumber[code] || pecas.find(p => (p.numero||'')===(code||'')) || null).filter(Boolean);
+    if(list.length === 0){
+      list = pecas.filter(p => (p.eventos||[]).map(x=>(''+x).replace(/^E0*/i,'').replace(/^E/i,'')).includes((''+item.codigo).replace(/^E0*/i,'')));
+    }
+    html = list.length ? `<div class="thumbnail-grid">` +
+      list.map(p => thumb(p.imagens && p.imagens[0], p.numero, p.nome, p.descricao, 'peca', 'peca', p.numero||p.nome)).join('') +
+      `</div>` : '<p>Nenhuma peça listada.</p>';
+  }
+  else if(currentTab === 'docs'){
+    const codeNorm = ('' + (item.codigo || '')).replace(/^E0*/i, '').replace(/^E/i, '').trim();
+    const piecesInEvent = pecas.filter(p =>
+      (p.eventos || []).some(ev => ('' + ev).replace(/^E0*/i, '').replace(/^E/i, '').trim() === codeNorm)
+    );
+    const matCodesFromPieces = Array.from(new Set(piecesInEvent.flatMap(p => p.acessorios || [])));
+    const matsDirect = materiais.filter(m =>
+      (m.eventos || []).some(ev => ('' + ev).replace(/^E0*/i, '').replace(/^E/i, '').trim() === codeNorm)
+    );
+    const matsAll = Array.from(
+      new Set([
+        ...matCodesFromPieces.map(code => code.toString().trim()),
+        ...matsDirect.map(m => (m.numero || '').toString().trim())
+      ])
+    );
+    const list = matsAll.map(c => {
+      if (materialByNumber[c]) return materialByNumber[c];
+      const lower = c.toLowerCase();
+      return materiais.find(m =>
+        ((m.numero || '').toString().trim() === c) ||
+        ((m.nome || '').toString().toLowerCase().trim() === lower)
+      ) || null;
+    }).filter(Boolean);
+    html = list.length ? `<div class="thumbnail-grid">` +
+      list.map(m => thumb(m.imagens && m.imagens[0], m.numero, m.nome, m.descricao, 'material', 'material', m.numero||m.nome)).join('') +
+      `</div>` : '<p>Nenhum material vinculado.</p>';
+  }
+}
+else if(currentType === 'material'){
+  if(currentTab === 'pecas'){
+    const rel = pecas.filter(p => (p.acessorios||[]).some(a => matchAccessory(a, item)));
+    html = rel.length ? `<div class="thumbnail-grid">` +
+      rel.map(p => thumb(p.imagens && p.imagens[0], p.numero, p.nome, p.descricao, 'peca', 'peca', p.numero||p.nome)).join('') +
+      `</div>` : '<p>Nenhuma peça vinculada a este material.</p>';
+  }
+  else if(currentTab === 'eventos'){
+    const evSet = new Set((item.eventos||[]).map(c=>(''+c).replace(/^E0*/i,'').replace(/^E/i,'')));
+    const relPieces = pecas.filter(p => (p.acessorios||[]).some(a => matchAccessory(a, item)));
+    relPieces.forEach(p => (p.eventos||[]).forEach(e => evSet.add((''+e).replace(/^E0*/i,'').replace(/^E/i,''))));
+    const list = Array.from(evSet).map(code=> eventByCode(code)).filter(Boolean);
+    html = list.length ? `<div class="thumbnail-grid">` +
+      list.map(ev => thumb(ev.imagens && ev.imagens[0], ev.codigo, ev.nome, ev.cidade, 'evento', 'evento', ev.codigo)).join('') +
+      `</div>` : '<p>Nenhum evento vinculado.</p>';
+  }
+}
+content.innerHTML = html;
+
+    }
+    content.style.opacity = 1;
+  }, 80);
+}
+
+/* helpers */
+function matchAccessory(token, materialObj){
+  if(!token || !materialObj) return false;
+  const t = token.toString().trim().toLowerCase();
+  if(materialObj.numero && (materialObj.numero+'').toString().toLowerCase() === t) return true;
+  if((materialObj.nome||'').toString().toLowerCase() === t) return true;
+  if(materialByNumber[t] && materialByNumber[t] === materialObj) return true;
+  return false;
+}
+function eventByCode(code){
+  return eventos.find(e => (e.codigo||'')===(code||'')) || eventos.find(e => (e.codigo||'').replace(/^E0*/,'')===(code||'')) || null;
+}
+function openItem(type,id){
+  currentType = type; currentId = id; currentTab = 'overview'; renderTabs(); renderContent();
+}
+function showAll(type, list=null){
+  currentType = type; currentTab = 'overview';
+  const content = document.getElementById('content');
+  let arr = list || (type === 'peca' ? pecas : type === 'evento' ? eventos : materiais);
+  let html = `<h2>Todos os ${type==='peca'?'Itens do Acervo':type==='evento'?'Eventos':'Materiais de Divulgação'}</h2>`;
+  html += `<div class="thumbnail-grid">`;
+  arr.forEach(i=>{
+  const img = (i.imagens && i.imagens[0]) ? (i.imagens[0]) : (i.linkFotos||'');
+  html += `
+  <div class="thumbnail-card" onclick="openItem('${type}', '${escapeAttr(i.numero||i.codigo||i.nome)}')">
+    ${img ? `<img src="${(img.endsWith('.png') || img.endsWith('.jpg')) ? img : img + '.png'}"
+     onerror="if(!this.src.endsWith('.jpg')) this.src=this.src.replace('.png','.jpg');">
+` : ''}
+    <h3>${escapeHtml(i.numero || i.codigo || '—')}</h3>
+    <p>${escapeHtml(i.nome || i.descricao || i.cidade || '')}</p>
+  </div>`;
+
+});
+
+
+  html += `</div>`;
+  document.getElementById('tabs').innerHTML = '';
+  content.innerHTML = html;
+}
+
+/* search */
+function attachSearch(){
+  const input = document.getElementById('search');
+  input.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter') return;
+    const q = input.value.toLowerCase().trim();
+    const type = document.getElementById('typeSelect').value;
+    if(!q) { showAll(type); return; }
+    if(type === 'peca'){
+      const results = pecas.filter(p => ((p.nome||'')+ ' ' + (p.numero||'') + ' ' + (p.setor||'')).toLowerCase().includes(q));
+      if(results.length===1) openItem('peca', results[0].numero||results[0].nome);
+      else if(results.length>1) showAll('peca', results);
+      else {
+        const evMatches = eventos.filter(ev => (ev.nome||'').toLowerCase().includes(q));
+        if(evMatches.length>0){
+          const codes = evMatches.map(ev=>ev.codigo);
+          const pieces = pecas.filter(p => (p.eventos||[]).some(h => codes.includes((''+h).replace(/^E0*/i,''))));
+          if(pieces.length>0) showAll('peca', pieces);
+          else alert('Nenhuma peça encontrada para o evento pesquisado.');
+        } else alert('Peça não encontrada.');
+      }
+    } else if(type === 'evento'){
+      const results = eventos.filter(ev => ((ev.nome||'') + ' ' + (ev.local||'') + ' ' + (ev.cidade||'')).toLowerCase().includes(q));
+      if(results.length===1) openItem('evento', results[0].codigo);
+      else if(results.length>1) showAll('evento', results);
+      else alert('Evento não encontrado.');
+    } else {
+      const results = materiais.filter(m => ((m.nome||'') + ' ' + (m.numero||'')).toLowerCase().includes(q));
+      if(results.length===1) openItem('material', results[0].numero||results[0].nome);
+      else if(results.length>1) showAll('material', results);
+      else {
+        const byAccessory = pecas.filter(p => (p.acessorios||[]).some(a => (a||'').toLowerCase().includes(q)));
+        if(byAccessory.length>0) showAll('peca', byAccessory);
+        else alert('Material não encontrado.');
+      }
+    }
+  });
+}
+
+/* small escape helpers */
+function escapeHtml(s){ if(!s && s!==0) return ''; return s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s){ return (s||'').toString().replace(/'/g,"").replace(/"/g,""); }
+
+/* ---------- start ---------- */
+tryAutoLoad();
+</script>
+</body>
+</html>
